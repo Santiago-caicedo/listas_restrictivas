@@ -1,0 +1,48 @@
+{% extends 'consultas/base.html' %}
+
+{% block title %}Detalle de Búsqueda | Plataforma LAFT{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <h1 class="display-6">Detalle de Búsqueda (Expediente)</h1>
+        <p class="text-muted">Resultados completos para la consulta de <strong>"{{ busqueda.termino_buscado }}"</strong> realizada el {{ busqueda.fecha_busqueda|date:"d/m/Y \a \l\a\s P" }}.</p>
+        <a href="{% url 'historial_busquedas' %}" class="btn btn-outline-secondary btn-sm mt-2">
+            <i class="bi bi-arrow-left"></i> Volver al Historial
+        </a>
+    </header>
+
+    {% for resultado in busqueda.resultados.all %}
+        <div class="card mb-3 {% if resultado.es_restrictiva %}border-danger border-3{% endif %}">
+            <div class="card-header {% if resultado.es_restrictiva %}bg-danger text-white{% else %}bg-light{% endif %}">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-vcard"></i> 
+                    {{ resultado.nombre_completo }} 
+                    <small class="text-muted">(ID: {{ resultado.identificacion }})</small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>Tipo de Lista:</strong> {{ resultado.tipo_lista }}</p>
+                        <p class="mb-2"><strong>Fuente:</strong> {{ resultado.fuente }}</p>
+                        <p class="mb-0"><strong>¿Lista Restrictiva?:</strong> 
+                            {% if resultado.es_restrictiva %}
+                                <span class="badge bg-danger">Sí</span>
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>Relacionado Con:</strong></p>
+                        <p class="text-muted">{{ resultado.relacionado_con }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+         <div class="alert alert-warning" role="alert">
+            Esta búsqueda no tuvo resultados asociados.
+        </div>
+    {% endfor %}
+{% endblock %}

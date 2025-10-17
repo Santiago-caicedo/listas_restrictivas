@@ -1,0 +1,137 @@
+{% extends 'consultas/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | Plataforma LAFT{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1 class="display-6">Dashboard de Inteligencia de Riesgo</h1>
+    <p class="text-muted">Análisis de las consultas realizadas por {{ user.empresa.nombre }} en los últimos 30 días.</p>
+</header>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Consultas (Últimos 30 días)</h6>
+                <p class="card-text display-4 fw-bold">{{ total_consultas_mes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Alertas Generadas (30 días)</h6>
+                <p class="card-text display-4 fw-bold text-danger">{{ total_alertas_mes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Tasa de Alerta (30 días)</h6>
+                <p class="card-text display-4 fw-bold text-warning">{{ tasa_alerta }}%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Consultas (Hoy)</h6>
+                <p class="card-text display-4 fw-bold">{{ consultas_hoy }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">Tendencia de Actividad (Últimos 30 días)</div>
+            <div class="card-body">
+                <canvas id="tendenciaChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">Principales Fuentes de Alerta</div>
+            <div class="card-body">
+                <canvas id="fuentesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{{ labels_tendencia|json_script:"labels-tendencia" }}
+{{ data_consultas|json_script:"data-consultas" }}
+{{ data_alertas|json_script:"data-alertas" }}
+{{ labels_fuentes|json_script:"labels-fuentes" }}
+{{ data_fuentes|json_script:"data-fuentes" }}
+
+<script>
+    // Leemos los datos de forma segura
+    const labelsTendencia = JSON.parse(document.getElementById('labels-tendencia').textContent);
+    const dataConsultas = JSON.parse(document.getElementById('data-consultas').textContent);
+    const dataAlertas = JSON.parse(document.getElementById('data-alertas').textContent);
+    const labelsFuentes = JSON.parse(document.getElementById('labels-fuentes').textContent);
+    const dataFuentes = JSON.parse(document.getElementById('data-fuentes').textContent);
+
+    // Configuración Gráfico de Tendencia
+    const ctxTendencia = document.getElementById('tendenciaChart').getContext('2d');
+    new Chart(ctxTendencia, {
+        type: 'line',
+        data: {
+            labels: labelsTendencia,
+            datasets: [{
+                label: 'Consultas',
+                data: dataConsultas,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true,
+                tension: 0.3
+            }, {
+                label: 'Alertas',
+                data: dataAlertas,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        }
+    });
+
+    // Configuración Gráfico de Fuentes
+    const ctxFuentes = document.getElementById('fuentesChart').getContext('2d');
+    new Chart(ctxFuentes, {
+        type: 'doughnut',
+        data: {
+            labels: labelsFuentes,
+            datasets: [{
+                label: 'Nº de Alertas',
+                data: dataFuentes,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                ],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

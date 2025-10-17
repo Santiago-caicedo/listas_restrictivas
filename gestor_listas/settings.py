@@ -32,17 +32,32 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+# APPS COMPARTIDAS (viven en el esquema 'public')
+SHARED_APPS = (
+    'django_tenants',
+    'empresas',  
+    'usuarios',
+
+    # Apps de Django que deben ser compartidas
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'consultas',
-]
+)
+
+# APPS POR INQUILINO (sus tablas se crearán en el esquema de cada empresa)
+TENANT_APPS = (
+    'consultas', # Nuestra app de consultas es específica de cada empresa
+)
+
+# Ahora, modifica tu INSTALLED_APPS para que use estas listas
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
 
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -86,6 +101,9 @@ DATABASES = {
     }
 }
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -127,3 +145,27 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+TENANT_MODEL = "empresas.Empresa"
+TENANT_DOMAIN_MODEL = "empresas.Domain"
+
+
+AUTH_USER_MODEL = 'usuarios.Usuario'
+
+
+# --- CONFIGURACIÓN DE AUTENTICACIÓN ---
+
+# URL a la que se redirigirá a los usuarios si intentan acceder a una página protegida sin estar logueados.
+LOGIN_URL = '/cuentas/login/'
+
+# URL a la que se redirigirá al usuario después de un inicio de sesión exitoso.
+LOGIN_REDIRECT_URL = '/' # La página principal (nuestra página de búsqueda)
+
+# URL a la que se redirigirá al usuario después de cerrar sesión.
+LOGOUT_REDIRECT_URL = '/cuentas/login/' # Lo enviamos de vuelta a la página de login
+
+
+# --- CREDENCIALES DEL API ---
+API_TOKEN = config('API_TOKEN')
+API_BASE_URL = config('API_BASE_URL')
