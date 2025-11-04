@@ -1,6 +1,8 @@
 # archivo: gestor_listas/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # La ruta del admin ahora es la pública, para superusuarios
@@ -11,4 +13,10 @@ urlpatterns = [
     
     # La ruta raíz la manejará nuestra app de consultas
     path('', include('consultas.urls')),
+
+    path('cargas-masivas/', include('cargas_masivas.urls')),
 ]
+
+# Añadir esto al final, solo para desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

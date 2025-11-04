@@ -86,6 +86,11 @@
                         <i class="bi bi-clock-history"></i> Historial
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'cargas-masivas' in request.path %}active{% endif %}" href="{% url 'listar_lotes' %}">
+                        <i class="bi bi-files"></i> Cargas Masivas
+                    </a>
+                </li>
             </ul>
         </div>
         <div class="user-info">

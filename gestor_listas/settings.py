@@ -38,6 +38,8 @@ SHARED_APPS = (
     'empresas',  
     'usuarios',
 
+    'cargas_masivas',
+
     # Apps de Django que deben ser compartidas
     'django.contrib.admin',
     'django.contrib.auth',
@@ -177,3 +179,13 @@ AUTHENTICATION_BACKENDS = [
     # Falls back to the default check (needed for admin login, superusers)
     'django.contrib.auth.backends.ModelBackend', 
 ]
+
+
+# --- CONFIGURACIÓN DE CORREO (para pruebas en consola) ---
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@vadomsystems.com' # Email por defecto
+ADMIN_EMAIL = 'tu-email-de-admin@gmail.com' # Email de tu equipo admin
+
+# --- CONFIGURACIÓN DE ARCHIVOS (MEDIA) ---
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
