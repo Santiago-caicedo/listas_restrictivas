@@ -1,33 +1,84 @@
 # archivo: cargas_masivas/signals.py
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import LoteConsultaMasiva
 
+# Nuevas importaciones
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+
 @receiver(post_save, sender=LoteConsultaMasiva)
 def notificar_cambio_lote(sender, instance, created, **kwargs):
-    if created:
-        # Notificar al ADMIN que hay un nuevo lote
-        subject = f'Nueva Solicitud de Carga Masiva - {instance.empresa.nombre}'
-        message = f'''
-        El usuario {instance.usuario_solicitante.username} de la empresa {instance.empresa.nombre}
-        ha subido un nuevo lote para procesar.
+    
+    domain = settings.MI_DOMINIO
 
-        Puedes gestionarlo en el panel de administración.
-        '''
-        # Asegúrate de haber definido ADMIN_EMAIL en settings.py
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
-        print(f"Correo de notificación enviado al admin por lote {instance.id}")
+    if created:
+        # ----- INICIO: Notificación al ADMIN (Esto ya lo teníamos) -----
+        subject_admin = f'Nueva Solicitud de Carga Masiva - {instance.empresa.nombre}'
+        context_admin = {'instance': instance, 'domain': domain}
+        
+        html_message_admin = render_to_string('cargas_masivas/emails/admin_notificacion.html', context_admin)
+        plain_message_admin = strip_tags(html_message_admin)
+
+        try:
+            msg_admin = EmailMultiAlternatives(
+                subject=subject_admin,
+                body=plain_message_admin,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[settings.ADMIN_EMAIL]
+            )
+            msg_admin.attach_alternative(html_message_admin, "text/html")
+            msg_admin.send()
+            print(f"Correo HTML de notificación enviado al admin por lote {instance.id}")
+        except Exception as e:
+            print(f"Error al enviar correo HTML al admin: {e}")
+        # ----- FIN: Notificación al ADMIN -----
+
+
+        # ----- INICIO: NUEVA Notificación al USUARIO (Confirmación) -----
+        subject_user = f'Hemos recibido tu solicitud de Carga Masiva (ID: {instance.id})'
+        context_user = {'instance': instance, 'domain': domain}
+
+        html_message_user = render_to_string('cargas_masivas/emails/usuario_confirmacion.html', context_user)
+        plain_message_user = strip_tags(html_message_user)
+
+        try:
+            msg_user = EmailMultiAlternatives(
+                subject=subject_user,
+                body=plain_message_user,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[instance.usuario_solicitante.email] # Al usuario
+            )
+            msg_user.attach_alternative(html_message_user, "text/html")
+            msg_user.send()
+            print(f"Correo HTML de confirmación enviado al usuario {instance.usuario_solicitante.email}")
+        except Exception as e:
+            print(f"Error al enviar correo HTML de confirmación al usuario: {e}")
+        # ----- FIN: NUEVA Notificación al USUARIO -----
+
 
     elif instance.estado == 'PROCESADO' and instance.archivo_resultado:
-        # Notificar al USUARIO que su lote está listo
-        subject = 'Tu Reporte de Consulta Masiva está Listo'
-        message = f'''
-        Hola {instance.usuario_solicitante.username},
+        # Notificar al USUARIO que su lote está listo (Esto ya lo teníamos)
+        subject = f'Tu Reporte de Consulta Masiva (ID: {instance.id}) está Listo'
+        
+        context = {'instance': instance, 'domain': domain}
+        
+        html_message = render_to_string('cargas_masivas/emails/usuario_notificacion.html', context)
+        plain_message = strip_tags(html_message)
 
-        Tu solicitud de consulta masiva (ID: {instance.id}) ha sido procesada.
-        Ya puedes descargar el reporte en PDF desde la sección "Cargas Masivas" de la plataforma.
-        '''
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [instance.usuario_solicitante.email])
-        print(f"Correo de notificación enviado al usuario {instance.usuario_solicitante.email}")
+        try:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[instance.usuario_solicitante.email]
+            )
+            msg.attach_alternative(html_message, "text/html")
+            msg.send()
+            print(f"Correo HTML de reporte listo enviado al usuario {instance.usuario_solicitante.email}")
+        
+        except Exception as e:
+            print(f"Error al enviar correo HTML de reporte listo al usuario: {e}")

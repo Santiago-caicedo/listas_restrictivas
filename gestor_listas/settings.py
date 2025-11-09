@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'empresas',
     'usuarios',
     'consultas',
-    'cargas_masivas',
+    'cargas_masivas.apps.CargasMasivasConfig',
 ]
 
 
@@ -121,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -179,7 +179,9 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 
 # Estos no cambian
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER # El correo saliente será 'info@vadomdata.com'
-ADMIN_EMAIL = 'caicedosantiago38@gmail.com' # Email de tu equipo admin
+ADMIN_EMAIL = config('ADMIN_EMAIL', default='caicedosantiago38@gmail.com')
+
+MI_DOMINIO = config('MI_DOMINIO', default='http://127.0.0.1:8000')
 
 # --- CONFIGURACIÓN DE ARCHIVOS (MEDIA) ---
 MEDIA_URL = '/media/'

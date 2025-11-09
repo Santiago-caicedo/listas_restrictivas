@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Listo</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333;">
+
+    <table width="100%" max-width="600px" style="margin: auto; border-collapse: collapse; border: 1px solid #ddd;">
+        <tr>
+            <td style="background-color: #f9f9f9; padding: 20px; text-align: center;">
+                <img src="[URL_PUBLICA_DE_TU_LOGO]" alt="Logo Empresa" style="max-width: 180px;">
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding: 30px;">
+                <h1 style="color: #0275d8; text-align: center; margin-top: 0;">¡Tu Reporte está Listo!</h1>
+                
+                <p style="font-size: 16px; line-height: 1.6;">
+                    Hola <strong>{{ instance.usuario_solicitante.username }}</strong>,
+                </p>
+                <p style="font-size: 16px; line-height: 1.6;">
+                    Nos complace informarte que tu solicitud de consulta masiva (ID: {{ instance.id }}) ha sido procesada exitosamente.
+                </p>
+
+                <p style="font-size: 16px; line-height: 1.6;">
+                    Ya puedes iniciar sesión en la plataforma para descargar el reporte en PDF.
+                </p>
+
+                <p style="text-align: center; margin-top: 30px;">
+                    <a href="{{ domain }}/cargas-masivas/" 
+                       style="background-color: #0275d8; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                        Ir a Cargas Masivas
+                    </a>
+                </p>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="background-color: #333; color: #aaa; padding: 20px; text-align: center; font-size: 12px;">
+                Gracias por usar nuestros servicios.
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
