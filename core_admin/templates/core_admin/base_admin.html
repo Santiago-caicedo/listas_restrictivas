@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -58,7 +59,7 @@
     <div class="sidebar">
         <div>
             <div class="sidebar-header">
-                <img src="https://vadomdata.com/wp-content/uploads/2025/10/lOGO-BLANCO-VADOM-e1760567317876.png" alt="Logo" class="sidebar-logo">
+                <img src="{% static 'images/logo_vadom.png' %}" alt="Logo" class="sidebar-logo">
                 <h5 class="text-white">Panel de Administración</h5>
             </div>
     
@@ -66,6 +67,11 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'core_admin:dashboard' %}">
                         <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'usuarios' in request.path %}active{% endif %}" href="{% url 'core_admin:usuario_list' %}">
+                        <i class="bi bi-people-fill"></i> Gestionar Usuarios
                     </a>
                 </li>
                 <li class="nav-item">
@@ -78,7 +84,7 @@
                         <i class="bi bi-bar-chart-line-fill"></i> Reporte Mensual
                     </a>
                 </li>
-                </ul>
+            </ul>
         </div>
         <div class="user-info">
             <span class="username"><i class="bi bi-person-circle"></i> {{ request.user.username }}</span>

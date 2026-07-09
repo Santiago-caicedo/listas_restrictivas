@@ -29,9 +29,15 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['compas.vadomconsultas.com', 'localhost', '127.0.0.1']
+# Hosts permitidos - leer desde .env (separados por coma)
+# Ejemplo en .env: ALLOWED_HOSTS=midominio.com,localhost,127.0.0.1
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
-CSRF_TRUSTED_ORIGINS = ['https://compas.vadomconsultas.com']
+# Orígenes CSRF confiables - leer desde .env (separados por coma)
+# Ejemplo en .env: CSRF_TRUSTED_ORIGINS=https://midominio.com
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
+# Limpiar lista vacía si no hay orígenes configurados
+CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
 
 
 
@@ -71,7 +77,7 @@ ROOT_URLCONF = 'gestor_listas.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -184,13 +190,77 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 
 # Estos no cambian
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER # El correo saliente será 'info@vadomdata.com'
-ADMIN_EMAIL = config('ADMIN_EMAIL', default='caicedosantiago38@gmail.com')
+ADMIN_EMAIL = config('ADMIN_EMAIL', default='vadomdata@gmail.com')
 
 MI_DOMINIO = config('MI_DOMINIO', default='http://127.0.0.1:8000')
 
-# --- CONFIGURACIÓN DE ARCHIVOS (MEDIA) ---
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATIC_URL = 'static/'
+# ===========================================
+# CONFIGURACIÓN HÍBRIDA DE ARCHIVOS ESTÁTICOS Y MEDIA
+# ===========================================
+# - DEBUG=True  → Almacenamiento LOCAL (desarrollo)
+# - DEBUG=False → Almacenamiento S3 (producción)
+
+# Rutas locales (siempre necesarias, incluso para collectstatic)
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+if DEBUG:
+    # ===========================================
+    # MODO DESARROLLO (LOCAL)
+    # ===========================================
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+
+    # Usar almacenamiento local por defecto
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+else:
+    # ===========================================
+    # MODO PRODUCCIÓN (AWS S3)
+    # ===========================================
+
+    # Configuración de AWS S3
+    AWS_STORAGE_BUCKET_NAME = 'vadomdata'
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None  # Evita error "AccessControlListNotSupported"
+
+    # Prefijo dinámico por cliente (ej: 'comertex', 'redpapaz')
+    S3_PREFIX = config('S3_CLIENT_PREFIX', default='default_prefix')
+
+    # Importar backend de S3
+    from storages.backends.s3boto3 import S3Boto3Storage
+
+    # Clases de almacenamiento personalizadas
+    class StaticStorage(S3Boto3Storage):
+        location = f'{S3_PREFIX}/static'
+
+    class MediaStorage(S3Boto3Storage):
+        location = f'{S3_PREFIX}/media'
+        file_overwrite = False
+
+    # URLs apuntando a S3
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_PREFIX}/static/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{S3_PREFIX}/media/'
+
+    # Asignar backends de S3
+    STORAGES = {
+        "default": {
+            "BACKEND": "gestor_listas.settings.MediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "gestor_listas.settings.StaticStorage",
+        },
+    }
